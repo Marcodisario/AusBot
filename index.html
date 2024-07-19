@@ -1,0 +1,20 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="title">Home</title>
+    <script>
+        const title = document.getElementById("title");
+        const emojis = ["✨", "💫", "🌟", "🔮", "🧙‍♀️", "🧙‍♂️"];
+        let i = 0;
+        setInterval(() => {
+            title.textContent = `Home ${emojis[i++ % emojis.length]}`;
+        }, 500);
+    </script>
+    <link rel="icon" type="image/png" href="pfp.jpg">
+</head>
+<body>
+    <h1>Hola mundo!</h1>
+    <p>You can read our <a href="t&c.html">Terms of Service</a> and <a href="privacy-policy.html">Privacy Policy</a> for more information.</p>
+</body>
+</html>

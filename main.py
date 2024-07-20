@@ -139,17 +139,52 @@ def iterate_over_sons(url_location, parent_xpath):
 
     return output
 
+def scrape_subjects():
+    driver.get("https://siu.austral.edu.ar/portal/cursada/")
+    parent_xpath = '//*[@id="js-listado-materias"]/ul/li/a'
+    output = {}
+    WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.XPATH, parent_xpath)))
+    elements = driver.find_elements(By.XPATH, parent_xpath)
 
+    for element in elements:
+        output[element.text] = {
+            'url': element.get_attribute('href')
+        }
+
+    for subject_name, subject_data in output.items():
+        driver.get(subject_data['url'])
+        time.sleep(0.3)
+        try:
+            cupos = driver.find_element(By.XPATH, '//*[@id="comisiones"]/li/div/ul/li[1]/div[1]/div[2]').text
+        except:
+            cupos = ''
+        try:
+            description = driver.find_element(By.XPATH, '//*[@id="comisiones"]/li/div/ul/div/div[2]').text
+        except:
+            description = ''
+        output[subject_name] = {
+            'url': subject_data['url'],
+            'cupos': cupos,
+            'description': description,
+        }
+
+    return output
 
 @bot.tree.command(name="ver_materias")
 async def ver_materias(interaction: discord.Interaction):
     """Muestra las materias scrapeadas almacenadas."""
     if materias:
-        response = "\n".join(materias)
+        embed = discord.Embed(title=f"Materias Disponibles - {len(materias)}", color=discord.Color.blue())
+        for materia, data in materias.items():
+            embed.add_field(
+                name=materia, 
+                value=f"[Ver materia]({data['url']})\n**Cupos:** {data.get('cupos', 'N/A')} | **Inscriptos:** {data.get('inscriptos', 'N/A')}\n**Descripción:** {data.get('description', 'N/A')}", 
+                inline=False
+            )
+        await interaction.response.send_message(embed=embed)
     else:
-        response = "No se encontraron materias."
+        await interaction.response.send_message("No se encontraron materias.")
 
-    await interaction.response.send_message(f"```\n{response}\n```")
 
 @bot.tree.command(name="ver_notificaciones")
 async def ver_notificaciones(interaction: discord.Interaction):
@@ -171,10 +206,8 @@ def scrape_data():
     seleccionar_propuesta(2)
 
     # Scrape de materias
-    WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, '//*[@id="js-listado-materias"]/ul')))
-    materias_elements = driver.find_elements(By.XPATH, '//*[@id="js-listado-materias"]/ul/li/a')
     global materias
-    materias = [element.text for element in materias_elements]
+    materias = scrape_subjects()
 
     # Scrape de notificaciones
     driver.get('https://siu.austral.edu.ar/portal/mensajes/')

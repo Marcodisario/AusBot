@@ -1,7 +1,3 @@
-import discord
-from discord.ext import commands
-from discord import app_commands
-
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -15,43 +11,6 @@ from selenium.webdriver.chrome.options import Options
 import asyncio
 
 load_dotenv()
-
-TOKEN=os.getenv('TOKEN')
-
-intents = discord.Intents.default()
-intents.message_content = True  # Ajusta los intents según sea necesario
-
-# Inicializa el bot con un prefijo (aunque no lo usaremos para comandos de barra diagonal)
-bot = commands.Bot(command_prefix='!', intents=intents)
-
-
-
-@bot.event
-async def on_ready():
-    global materias, notificaciones
-    print(f'{bot.user} ha iniciado sesión en Discord!')
-    print(f'Bot ID: {bot.user.id}')
-    print(f'Conectado a {len(bot.guilds)} servidor(es)')
-
-    try:
-        # Realizar el scraping de datos y almacenar los resultados en las variables globales
-        scrape_data()
-    except Exception as e:
-        print(f"Error al realizar el scraping: {e}")
-
-    try:
-        synced = await bot.tree.sync()
-        print(f"Sincronizado {len(synced)} comando(s) global(es)")
-    except Exception as e:
-        print(f"Error al sincronizar comandos globales: {e}")
-
-    for guild in bot.guilds:
-        try:
-            synced = await bot.tree.sync(guild=guild)
-            print(f"Sincronizado {len(synced)} comando(s) en el servidor: {guild.name} (ID: {guild.id})")
-        except Exception as e:
-            print(f"Error al sincronizar comandos en el servidor {guild.name} (ID: {guild.id}): {e}")
-
 
 
 # VARIABLES A CAMBIAR 
@@ -139,6 +98,37 @@ def iterate_over_sons(url_location, parent_xpath):
 
     return output
 
+def scrape_subjects():
+    driver.get("https://siu.austral.edu.ar/portal/cursada/")
+    parent_xpath = '//*[@id="js-listado-materias"]/ul/li/a'
+    output = {}
+    WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.XPATH, parent_xpath)))
+    elements = driver.find_elements(By.XPATH, parent_xpath)
+
+    for element in elements:
+        output[element.text] = {
+            'url': element.get_attribute('href')
+        }
+
+    for subject_name, subject_data in output.items():
+        driver.get(subject_data['url'])
+        time.sleep(0.3)
+        try:
+            cupos = driver.find_element(By.XPATH, '//*[@id="comisiones"]/li/div/ul/li[1]/div[1]/div[2]').text
+        except:
+            cupos = ''
+        try:
+            description = driver.find_element(By.XPATH, '//*[@id="comisiones"]/li/div/ul/div/div[2]').text
+        except:
+            description = ''
+        output[subject_name] = {
+            'url': subject_data['url'],
+            'cupos': cupos,
+            'description': description,
+        }
+
+    return output
+
 def scrape_data():
     print("🔄 Scraping de datos...")
     driver.get('https://siu.austral.edu.ar')
@@ -146,26 +136,26 @@ def scrape_data():
     seleccionar_propuesta(2)
 
     # Scrape de materias
-    materias = iterate_over_sons("https://siu.austral.edu.ar/portal/cursada/",'//*[@id="js-listado-materias"]/ul/li/a' )
+    materias = scrape_subjects()
 
     print(f"MATERIAAAAS {materias}")
     # Scrape de notificaciones
-    driver.get('https://siu.austral.edu.ar/portal/mensajes')
-    wait_and_interact_with_element('/html/body/div[1]/div/div/div[2]/div[1]/div/div/ul/li[2]/a')
+    # driver.get('https://siu.austral.edu.ar/portal/mensajes')
+    # wait_and_interact_with_element('/html/body/div[1]/div/div/div[2]/div[1]/div/div/ul/li[2]/a')
 
-    WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, '//*[@id="lista_mensajes"]/table/tbody')))
-    message_elements = driver.find_elements(By.XPATH, '//*[@id="lista_mensajes"]/table/tbody/tr')
-    global notificaciones
-    notificaciones = []
-    for message_element in message_elements:
-        if "leido" in message_element.get_attribute('class'):
-            notificaciones.append(f"[no_leído] {message_element.text}")
-        else:
-            notificaciones.append(f"[leido] {message_element.text}")
+    # WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, '//*[@id="lista_mensajes"]/table/tbody')))
+    # message_elements = driver.find_elements(By.XPATH, '//*[@id="lista_mensajes"]/table/tbody/tr')
+    # global notificaciones
+    # notificaciones = []
+    # for message_element in message_elements:
+    #     if "leido" in message_element.get_attribute('class'):
+    #         notificaciones.append(f"[no_leído] {message_element.text}")
+    #     else:
+    #         notificaciones.append(f"[leido] {message_element.text}")
 
-    print("📊 Datos scrapeados y almacenados.")
+    # print("📊 Datos scrapeados y almacenados.")
 
-    return materias, notificaciones
+    # return materias, notificaciones
 
 # materias, notificaciones = scrape_data()
 

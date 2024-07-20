@@ -177,9 +177,9 @@ def scrape_data():
     materias = [element.text for element in materias_elements]
 
     # Scrape de notificaciones
-    wait_and_interact_with_element('/html/body/div[1]/div/div/div[2]/div[1]/div/div/ul/li[2]/a')
+    driver.get('https://siu.austral.edu.ar/portal/mensajes/')
+    # wait_and_interact_with_element('/html/body/div[1]/div/div/div[2]/div[1]/div/div/ul/li[2]/a')
     
-
     WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, '//*[@id="lista_mensajes"]/table/tbody')))
     message_elements = driver.find_elements(By.XPATH, '//*[@id="lista_mensajes"]/table/tbody/tr')
     global notificaciones
@@ -218,7 +218,7 @@ def scrape_data():
 @bot.tree.command(name="hello")
 async def hello(interaction: discord.Interaction):
     await interaction.response.send_message(f"Hola, {interaction.user}!")
-
+ 
 
 @bot.command()
 async def sync(ctx):

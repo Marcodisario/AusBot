@@ -1,3 +1,7 @@
+import discord
+from discord.ext import commands
+from discord import app_commands
+
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -9,6 +13,46 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 import asyncio
+
+load_dotenv()
+
+TOKEN=os.getenv('TOKEN')
+
+intents = discord.Intents.default()
+intents.message_content = True  # Ajusta los intents según sea necesario
+
+# Inicializa el bot con un prefijo (aunque no lo usaremos para comandos de barra diagonal)
+bot = commands.Bot(command_prefix='!', intents=intents)
+
+
+
+@bot.event
+async def on_ready():
+    global materias, notificaciones
+    print(f'{bot.user} ha iniciado sesión en Discord!')
+    print(f'Bot ID: {bot.user.id}')
+    print(f'Conectado a {len(bot.guilds)} servidor(es)')
+
+    try:
+        # Realizar el scraping de datos y almacenar los resultados en las variables globales
+        scrape_data()
+    except Exception as e:
+        print(f"Error al realizar el scraping: {e}")
+
+    try:
+        synced = await bot.tree.sync()
+        print(f"Sincronizado {len(synced)} comando(s) global(es)")
+    except Exception as e:
+        print(f"Error al sincronizar comandos globales: {e}")
+
+    for guild in bot.guilds:
+        try:
+            synced = await bot.tree.sync(guild=guild)
+            print(f"Sincronizado {len(synced)} comando(s) en el servidor: {guild.name} (ID: {guild.id})")
+        except Exception as e:
+            print(f"Error al sincronizar comandos en el servidor {guild.name} (ID: {guild.id}): {e}")
+
+
 
 # VARIABLES A CAMBIAR 
 CAMPUS_URL = os.getenv("CAMPUS_URL")
@@ -126,6 +170,35 @@ def scrape_subjects():
 
     return output
 
+@bot.tree.command(name="ver_materias")
+async def ver_materias(interaction: discord.Interaction):
+    """Muestra las materias scrapeadas almacenadas."""
+    if materias:
+        embed = discord.Embed(title=f"Materias Disponibles - {len(materias)}", color=discord.Color.blue())
+        for materia, data in materias.items():
+            embed.add_field(
+                name=materia, 
+                value=f"[Ver materia]({data['url']})\n**Cupos:** {data.get('cupos', 'N/A')} | **Inscriptos:** {data.get('inscriptos', 'N/A')}\n**Descripción:** {data.get('description', 'N/A')}", 
+                inline=False
+            )
+        await interaction.response.send_message(embed=embed)
+    else:
+        await interaction.response.send_message("No se encontraron materias.")
+
+
+@bot.tree.command(name="ver_notificaciones")
+async def ver_notificaciones(interaction: discord.Interaction):
+    """Muestra solo las notificaciones leídas almacenadas."""
+    leidas = [notif for notif in notificaciones if "[no_leído]" in notif]
+    
+    if leidas:
+        response = "\n".join(leidas)
+    else:
+        response = "No se encontraron notificaciones leídas."
+
+    await interaction.response.send_message(f"```\n{response}\n```")
+
+
 def scrape_data():
     print("🔄 Scraping de datos...")
     driver.get('https://siu.austral.edu.ar/portal/cursada/')
@@ -133,6 +206,7 @@ def scrape_data():
     seleccionar_propuesta(2)
 
     # Scrape de materias
+    global materias
     materias = scrape_subjects()
 
     # Scrape de notificaciones
@@ -141,6 +215,7 @@ def scrape_data():
     
     WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, '//*[@id="lista_mensajes"]/table/tbody')))
     message_elements = driver.find_elements(By.XPATH, '//*[@id="lista_mensajes"]/table/tbody/tr')
+    global notificaciones
     notificaciones = []
     for message_element in message_elements:
         if "leido" in message_element.get_attribute('class'):
@@ -149,8 +224,9 @@ def scrape_data():
             notificaciones.append(f"[leido] {message_element.text}")
 
     print("📊 Datos scrapeados y almacenados.")
-    driver.quit()
-    return materias, notificaciones
+
+
+
 
 # def scrape_materias():
 #     microsoft_login()
@@ -168,3 +244,19 @@ def scrape_data():
 # seleccionar_propuesta(2)
 # materias = iterate_over_sons('https://siu.austral.edu.ar/portal/cursada/','//*[@id="js-listado-materias"]/ul/li/a')
 # print(materias)
+
+
+
+# Un ejemplo de comando de barra diagonal
+@bot.tree.command(name="hello")
+async def hello(interaction: discord.Interaction):
+    await interaction.response.send_message(f"Hola, {interaction.user}!")
+ 
+
+@bot.command()
+async def sync(ctx):
+    print("sync command")
+    await bot.tree.sync()
+    await ctx.send('Command tree synced.')
+
+bot.run(TOKEN)

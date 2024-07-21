@@ -10,6 +10,9 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 import asyncio
 
+load_dotenv()
+
+
 # VARIABLES A CAMBIAR 
 CAMPUS_URL = os.getenv("CAMPUS_URL")
 USER_EMAIL = os.getenv("USER_EMAIL")
@@ -128,29 +131,37 @@ def scrape_subjects():
 
 def scrape_data():
     print("🔄 Scraping de datos...")
-    driver.get('https://siu.austral.edu.ar/portal/cursada/')
+    driver.get('https://siu.austral.edu.ar')
     microsoft_login()
     seleccionar_propuesta(2)
 
     # Scrape de materias
     materias = scrape_subjects()
 
+    print(f"MATERIAAAAS {materias}")
     # Scrape de notificaciones
-    driver.get('https://siu.austral.edu.ar/portal/mensajes/')
+    # driver.get('https://siu.austral.edu.ar/portal/mensajes')
     # wait_and_interact_with_element('/html/body/div[1]/div/div/div[2]/div[1]/div/div/ul/li[2]/a')
-    
-    WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, '//*[@id="lista_mensajes"]/table/tbody')))
-    message_elements = driver.find_elements(By.XPATH, '//*[@id="lista_mensajes"]/table/tbody/tr')
-    notificaciones = []
-    for message_element in message_elements:
-        if "leido" in message_element.get_attribute('class'):
-            notificaciones.append(f"[no_leído] {message_element.text}")
-        else:
-            notificaciones.append(f"[leido] {message_element.text}")
 
-    print("📊 Datos scrapeados y almacenados.")
-    driver.quit()
-    return materias, notificaciones
+    # WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, '//*[@id="lista_mensajes"]/table/tbody')))
+    # message_elements = driver.find_elements(By.XPATH, '//*[@id="lista_mensajes"]/table/tbody/tr')
+    # global notificaciones
+    # notificaciones = []
+    # for message_element in message_elements:
+    #     if "leido" in message_element.get_attribute('class'):
+    #         notificaciones.append(f"[no_leído] {message_element.text}")
+    #     else:
+    #         notificaciones.append(f"[leido] {message_element.text}")
+
+    # print("📊 Datos scrapeados y almacenados.")
+
+    # return materias, notificaciones
+
+# materias, notificaciones = scrape_data()
+
+scrape_data()
+print(f"DATOS SCRAPEADOS => {materias}, {notificaciones}")
+
 
 # def scrape_materias():
 #     microsoft_login()

@@ -4,7 +4,6 @@ import discord
 import os
 # Importar funciones del scrapper
 import scrapper
-# from helpers import *
 import asyncio
 import time
 
@@ -17,7 +16,6 @@ intents = discord.Intents.default()
 intents.message_content = True
 # Inicializa el bot con un prefijo (aunque no lo usaremos para comandos de barra diagonal)
 bot = commands.Bot(command_prefix='!', intents=intents)
-
 
 # ///////////////////////////////////
 # ///////        EVENTS       ///////

@@ -26,13 +26,13 @@ async def on_ready():
     print(f'{bot.user} ha iniciado sesión en Discord!')
     print(f'Bot ID: {bot.user.id}')
     print(f'Conectado a {len(bot.guilds)} servidor(es)')
-    try:
-        try:
-            materias, notificaciones = scrapper.scrape_data()
-        except Exception as e:
-            print(f"Error al realizar el scraping: {e}")
-    except Exception as e:
-        print(f"Error al realizar el scraping: {e}")
+    # try:
+    # #     try:
+    # #         # materias, notificaciones = scrapper.scrape_data()
+    # #     except Exception as e:
+    # #         print(f"Error al realizar el scraping: {e}")
+    # # except Exception as e:
+    # #     print(f"Error al realizar el scraping: {e}")
 
     try:
         synced = await bot.tree.sync()
@@ -46,21 +46,32 @@ async def on_ready():
             print(f"Sincronizado {len(synced)} comando(s) en el servidor: {guild.name} (ID: {guild.id})")
         except Exception as e:
             print(f"Error al sincronizar comandos en el servidor {guild.name} (ID: {guild.id}): {e}")
+    bot.loop.create_task(print_message_periodically())
 
-async def run_every_3_hours():
+# async def run_every_3_hours():
+#     while True:
+#         try:
+#             materias, notificaciones = scrapper.scrape_data()
+#             print("Scraping realizado correctamente.")
+#         except Exception as e:
+#             print(f"Error al realizar el scraping: {e}")
+#         await asyncio.sleep(3 * 60 * 60)  # 3 hours in seconds
+
+
+async def print_message_periodically():
     while True:
-        try:
-            materias, notificaciones = scrapper.scrape_data()
-            print("Scraping realizado correctamente.")
-        except Exception as e:
-            print(f"Error al realizar el scraping: {e}")
-        await asyncio.sleep(3 * 60 * 60)  # 3 hours in seconds
+        print("This message is printed every 30 seconds")
+        await asyncio.sleep(30)
 
-async def main():
-    asyncio.create_task(run_every_3_hours())
-    await bot.start(TOKEN)
+# Add this to your bot's main event loop
+# bot.loop.create_task(print_message_periodically())
 
-asyncio.run(main())
+
+# async def main():
+#     asyncio.create_task(run_every_3_hours())
+#     await bot.start(TOKEN)
+
+# asyncio.run(main())
 
 # ///////////////////////////////////
 # ///////       COMMANDS      ///////

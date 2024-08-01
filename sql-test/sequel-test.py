@@ -13,7 +13,7 @@ cursor.execute('''
 cursor.execute("INSERT INTO counter_data (timestamp, json_data) VALUES (?, ?)", ('2022-10-15 08:30:00', 'example'))
 conn.commit()   
 
-cursor.execute("SELECT * FROM counter_data ORDER BY id DESC LIMIT 1")
-last_row = cursor.fetchone()
+# cursor.execute("SELECT * FROM counter_data ORDER BY id DESC LIMIT 1")
+# last_row = cursor.fetchone()
 
-print(last_row)
+# print(last_row)
